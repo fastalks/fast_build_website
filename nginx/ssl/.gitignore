@@ -1,0 +1,6 @@
+# SSL 证书文件
+cert.pem
+key.pem
+*.crt
+*.key
+*.csr
