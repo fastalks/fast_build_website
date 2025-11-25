@@ -15,6 +15,16 @@ if ! command -v docker >/dev/null 2>&1; then
   sudo ./install-docker.sh
 fi
 
+# 统一选择 docker compose 命令，兼容插件与独立版本
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_CMD=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_CMD=(docker-compose)
+else
+  echo "未检测到 docker compose 或 docker-compose，请确认 Docker 安装完整"
+  exit 1
+fi
+
 echo "[2/6] 安装 Certbot..."
 if ! command -v certbot >/dev/null 2>&1; then
   sudo apt-get update
@@ -23,7 +33,7 @@ fi
 
 echo "[3/6] 申请证书..."
 sudo systemctl stop nginx 2>/dev/null || true
-sudo docker compose down 2>/dev/null || true
+sudo "${COMPOSE_CMD[@]}" down 2>/dev/null || true
 sudo certbot certonly --standalone \
   --non-interactive --agree-tos \
   --preferred-challenges http \
@@ -37,7 +47,7 @@ sudo chown "$(id -u):$(id -g)" nginx/ssl/cert.pem nginx/ssl/key.pem
 sudo chmod 600 nginx/ssl/key.pem
 
 echo "[5/6] 启动服务..."
-sudo docker compose up -d --build
+sudo "${COMPOSE_CMD[@]}" up -d --build
 
 echo "[6/6] 配置自动续期..."
 ( sudo crontab -l 2>/dev/null; \
