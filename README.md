@@ -7,6 +7,8 @@
 - [快速开始](#快速开始)
 - [脚本说明](#脚本说明)
 - [服务拓扑](#服务拓扑)
+- [环境变量](#环境变量)
+- [数据持久化](#数据持久化)
 - [SSL 与安全](#ssl-与安全)
 - [开发模式](#开发模式)
 - [常见问题](#常见问题)
@@ -40,13 +42,44 @@ chmod +x fast_build.sh deploy.sh manage.sh install-docker.sh
 
 ## 服务拓扑
 
-`docker-compose.yml` 定义了三个核心服务：
+`docker-compose.yml` 定义了以下服务：
 
 - `backend`：Python API 服务，对外暴露 `8000` 端口，可选对接 `tgi-server`
 - `frontend`：Next.js SSR 应用，通过内部网络由 Nginx 转发
 - `nginx`：反向代理 + 静态资源服务，同时挂载 `nginx/nginx.conf` 与 `nginx/ssl`
+- `postgres`：主数据库，使用 `postgres:15-alpine`，默认开启 5432 映射
+- `redis`：缓存与消息队列，默认开启持久化 `appendonly`
 
 如使用 `tgi-server`，请在 Compose 中补充对应服务或移除 `depends_on` 配置。
+容器间互通可直接使用服务名作为主机名，例如 `postgres:5432`、`redis:6379`。
+
+## 环境变量
+
+应用需要一个 `.env` 文件来提供数据库凭据（`docker compose` 会自动加载同目录 `.env`）。示例：
+
+```env
+POSTGRES_DB=app_db
+POSTGRES_USER=app_user
+POSTGRES_PASSWORD=change_me
+POSTGRES_NON_ROOT_USER=app_user
+POSTGRES_NON_ROOT_PASSWORD=change_me
+```
+
+> 请务必修改默认密码，避免在公共仓库或日志中泄露。
+
+## 数据持久化
+
+- PostgreSQL 数据写入 `data/postgres/`
+- Redis AOF 日志保存在 `data/redis/`
+- Nginx 证书位于 `nginx/ssl/`
+
+部署前可预先创建这些目录并为 Docker 赋予写权限：
+
+```bash
+mkdir -p data/postgres data/redis nginx/ssl
+chmod 700 data/postgres
+chmod 700 data/redis
+```
 
 ## SSL 与安全
 
