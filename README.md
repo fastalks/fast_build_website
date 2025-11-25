@@ -25,6 +25,7 @@ chmod +x fast_build.sh deploy.sh manage.sh install-docker.sh
 ```
 
 > `fast_build.sh` 会在目标主机上申请 Let's Encrypt 证书、同步到 `nginx/ssl/`，并自动配置续期计划任务。
+> 在执行前，请确保目标域名已正确解析到当前服务器公网 IP，否则证书签发会失败。
 
 ## 脚本说明
 
